@@ -3,6 +3,7 @@ package request
 import "time"
 
 type CustomerRequest struct {
+	Id          int       `json:"id"`
 	NIK         string    `json:"nik"`
 	FullName    string    `json:"full_name"`
 	LegalName   string    `json:"legal_name"`

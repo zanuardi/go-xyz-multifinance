@@ -1,6 +1,7 @@
 package request
 
 type CustomerInstallmentRequest struct {
+	Id                    int     `json:"id"`
 	CustomerTransactionId int     `json:"customer_transaction_id"`
 	CustomerLimitId       int     `json:"customer_limit_id"`
 	Tenor                 int     `json:"tenor"`

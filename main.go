@@ -21,11 +21,34 @@ func main() {
 
 	db := app.NewDB()
 	validate := validator.New()
+
 	categoryRepository := repository.NewCategoryRepository()
 	categoryService := service.NewCategoryService(categoryRepository, db, validate)
 	categoryController := controller.NewCategoryController(categoryService)
 
-	router := app.NewRouter(categoryController)
+	customerRepository := repository.NewCustomerRepository()
+	customerService := service.NewCustomerService(customerRepository, db, validate)
+	customerController := controller.NewCustomerController(customerService)
+
+	customerTransactionRepository := repository.NewCustomerRepository()
+	customerTransactionService := service.NewCustomerService(customerTransactionRepository, db, validate)
+	customerTransactionController := controller.NewCustomerController(customerTransactionService)
+
+	customerInstallmentRepository := repository.NewCustomerRepository()
+	customerInstallmentService := service.NewCustomerService(customerInstallmentRepository, db, validate)
+	customerInstallmentController := controller.NewCustomerController(customerInstallmentService)
+
+	customerLimitRepository := repository.NewCustomerRepository()
+	customerLimitService := service.NewCustomerService(customerLimitRepository, db, validate)
+	customerLimitController := controller.NewCustomerController(customerLimitService)
+
+	router := app.NewRouter(
+		categoryController,
+		customerController,
+		customerTransactionController,
+		customerInstallmentController,
+		customerLimitController,
+	)
 
 	server := http.Server{
 		Addr:    "localhost:3000",

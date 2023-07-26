@@ -1,6 +1,7 @@
 package request
 
 type CustomerLimitRequest struct {
+	Id             int     `json:"id"`
 	CustomerId     int     `json:"customer_id"`
 	Limit1         float32 `json:"limit_1"`
 	Limit2         float32 `json:"limit_2"`

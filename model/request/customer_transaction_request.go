@@ -1,6 +1,7 @@
 package request
 
 type CustomerTransactionRequest struct {
+	Id                int     `json:"id"`
 	CustomerId        string  `json:"customer_id"`
 	ContractNumber    string  `json:"contract_number"`
 	OTRPrice          float32 `json:"otr_price"`
