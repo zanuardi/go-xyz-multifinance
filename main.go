@@ -1,12 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
 	"github.com/zanuardi/go-xyz-multifinance/app"
 	"github.com/zanuardi/go-xyz-multifinance/controller"
-	"github.com/zanuardi/go-xyz-multifinance/helper"
 	"github.com/zanuardi/go-xyz-multifinance/logger"
 	"github.com/zanuardi/go-xyz-multifinance/middleware"
 	"github.com/zanuardi/go-xyz-multifinance/repository"
@@ -22,31 +22,21 @@ func main() {
 	db := app.NewDB()
 	validate := validator.New()
 
-	categoryRepository := repository.NewCategoryRepository()
-	categoryService := service.NewCategoryService(categoryRepository, db, validate)
-	categoryController := controller.NewCategoryController(categoryService)
-
 	customerRepository := repository.NewCustomerRepository()
 	customerService := service.NewCustomerService(customerRepository, db, validate)
 	customerController := controller.NewCustomerController(customerService)
 
-	customerTransactionRepository := repository.NewCustomerRepository()
-	customerTransactionService := service.NewCustomerService(customerTransactionRepository, db, validate)
-	customerTransactionController := controller.NewCustomerController(customerTransactionService)
+	customerTransactionRepository := repository.NewCustomerTransactionRepository()
+	customerTransactionService := service.NewCustomerTransactionService(customerTransactionRepository, db, validate)
+	customerTransactionController := controller.NewCustomerTransactionController(customerTransactionService)
 
-	customerInstallmentRepository := repository.NewCustomerRepository()
-	customerInstallmentService := service.NewCustomerService(customerInstallmentRepository, db, validate)
-	customerInstallmentController := controller.NewCustomerController(customerInstallmentService)
-
-	customerLimitRepository := repository.NewCustomerRepository()
-	customerLimitService := service.NewCustomerService(customerLimitRepository, db, validate)
-	customerLimitController := controller.NewCustomerController(customerLimitService)
+	customerLimitRepository := repository.NewCustomerLimitRepository()
+	customerLimitService := service.NewCustomerLimitService(customerLimitRepository, db, validate)
+	customerLimitController := controller.NewCustomerLimitController(customerLimitService)
 
 	router := app.NewRouter(
-		categoryController,
 		customerController,
 		customerTransactionController,
-		customerInstallmentController,
 		customerLimitController,
 	)
 
@@ -57,5 +47,7 @@ func main() {
 	fmt.Println("running in", server.Addr)
 
 	err := server.ListenAndServe()
-	helper.PanicIfError(err)
+	if err != nil {
+		logger.Error(context.Background(), "main.server.ListenAndServe", err)
+	}
 }

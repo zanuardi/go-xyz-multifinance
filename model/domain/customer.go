@@ -4,7 +4,7 @@ import "time"
 
 type Customer struct {
 	Id          int       `json:"id"`
-	NIK         string    `json:"nik"`
+	NIK         string    `json:"nik" validate:"required"`
 	FullName    string    `json:"full_name"`
 	LegalName   string    `json:"legal_name"`
 	BirthPlace  string    `json:"birth_place"`

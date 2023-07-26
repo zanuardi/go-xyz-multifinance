@@ -90,14 +90,12 @@ func (customerService *CustomerTransactionServiceImpl) Create(ctx context.Contex
 
 func (customerService *CustomerTransactionServiceImpl) FindAll(ctx context.Context) ([]response.CustomerTransactionResponse, error) {
 	logCtx := "CustomerTransactionServiceImpl.FindAll"
-	fmt.Println("PASSED service")
 
 	tx, err := customerService.DB.Begin()
 	if err != nil {
 		logger.Error(ctx, logCtx, err)
 	}
 	defer helper.CommitOrRollback(tx)
-	fmt.Println("PASSED service")
 
 	customers, err := customerService.CustomerTransactionRepository.FindAll(ctx, tx)
 	fmt.Println(customers)

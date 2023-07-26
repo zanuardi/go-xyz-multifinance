@@ -1,15 +1,24 @@
 package helper
 
-import "database/sql"
+import (
+	"context"
+	"database/sql"
+
+	"github.com/zanuardi/go-xyz-multifinance/logger"
+)
 
 func CommitOrRollback(tx *sql.Tx) {
 	err := recover()
 	if err != nil {
 		errorRollback := tx.Rollback()
-		PanicIfError(errorRollback)
+		if err != nil {
+			logger.Error(context.Background(), "errorRollback", errorRollback)
+		}
 		panic(err)
 	} else {
 		errorCommit := tx.Commit()
-		PanicIfError(errorCommit)
+		if err != nil {
+			logger.Error(context.Background(), "errorRollback", errorCommit)
+		}
 	}
 }

@@ -51,7 +51,7 @@ func (repository *CustomerTransactionRepositoryImpl) FindAll(ctx context.Context
 
 	query := `SELECT id, customer_id, contract_number, otr_price, admin_fee, installment_amount,
 		interest_amount, asset_name, status, created_at, updated_at, deleted_at
-		FROM customer_transactions;`
+		FROM customer_transactions WHERE deleted_at IS NULL;`
 
 	rows, err := tx.QueryContext(ctx, query)
 	if err != nil {
@@ -80,7 +80,7 @@ func (repository *CustomerTransactionRepositoryImpl) FindById(ctx context.Contex
 	customerTransaction := domain.CustomerTransaction{}
 	query := `SELECT id, customer_id, contract_number, otr_price, admin_fee,
 		installment_amount,	interest_amount, asset_name, status, created_at, updated_at
-		FROM customer_transactions WHERE id = ?`
+		FROM customer_transactions WHERE id = ?  AND deleted_at IS NULL`
 
 	rows, err := tx.QueryContext(ctx, query, id)
 	if err != nil {

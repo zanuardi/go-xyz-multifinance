@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/zanuardi/go-xyz-multifinance/logger"
@@ -23,7 +24,7 @@ func (repository *CustomerLimitRepositoryImpl) Create(ctx context.Context, tx *s
 
 	query := `INSERT INTO customer_limits
 			(customer_id, limit_1, limit_2, limit_3, limit_4, remaining_limit,
-			created_at, updated_at
+			created_at, updated_at)
  			VALUES (?,?,?,?,?,?,?,?)`
 
 	now := time.Now()
@@ -50,8 +51,8 @@ func (repository *CustomerLimitRepositoryImpl) FindAll(ctx context.Context, tx *
 	customerLimits := []domain.CustomerLimit{}
 
 	query := `SELECT id, customer_id, limit_1, limit_2, limit_3, limit_4,
-			remaining_limit, created_at, updated_at, deleted_at
-			FROM customer_limits;`
+			remaining_limit, created_at, updated_at
+			FROM customer_limits  WHERE deleted_at IS NULL;`
 
 	rows, err := tx.QueryContext(ctx, query)
 	if err != nil {
@@ -61,15 +62,19 @@ func (repository *CustomerLimitRepositoryImpl) FindAll(ctx context.Context, tx *
 
 	for rows.Next() {
 		customerLimit := domain.CustomerLimit{}
-		rows.Scan(&customerLimit.Id, &customerLimit.CustomerId, &customerLimit.Limit1, &customerLimit.Limit2,
-			&customerLimit.Limit3, &customerLimit.Limit4, &customerLimit.RemainingLimit,
-			&customerLimit.CreatedAt, &customerLimit.UpdatedAt)
+		fmt.Println("RES REPO", customerLimits)
 
+		rows.Scan(&customerLimit.Id, &customerLimit.CustomerId, &customerLimit.Limit1,
+			&customerLimit.Limit2, &customerLimit.Limit3, &customerLimit.Limit4,
+			&customerLimit.RemainingLimit, &customerLimit.CreatedAt, &customerLimit.UpdatedAt)
+
+		fmt.Println("RES REPO", customerLimits)
 		customerLimits = append(customerLimits, customerLimit)
 		if err != nil {
 			logger.Error(ctx, logCtx, err)
 		}
 	}
+
 	return customerLimits, err
 }
 
@@ -79,8 +84,8 @@ func (repository *CustomerLimitRepositoryImpl) FindById(ctx context.Context, tx 
 
 	customerLimit := domain.CustomerLimit{}
 	query := `SELECT id, customer_id, limit_1, limit_2, limit_3, limit_4,
-			remaining_limit, created_at, updated_at, deleted_at
-			FROM customer_limits WHERE id = ?`
+			remaining_limit, created_at, updated_at
+			FROM customer_limits WHERE id = ?  AND deleted_at IS NULL`
 
 	rows, err := tx.QueryContext(ctx, query, id)
 	if err != nil {

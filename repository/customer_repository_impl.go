@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/zanuardi/go-xyz-multifinance/logger"
@@ -49,7 +50,7 @@ func (repository *CustomerRepositoryImpl) FindAll(ctx context.Context, tx *sql.T
 	customers := []domain.Customer{}
 
 	query := `SELECT id, nik, full_name, legal_name, birth_place, birth_date, salary, ktp_photo,
-	selfie_photo, created_at, updated_at FROM customers;`
+	selfie_photo, created_at, updated_at FROM customers WHERE deleted_at IS NULL;`
 
 	rows, err := tx.QueryContext(ctx, query)
 	if err != nil {
@@ -59,10 +60,13 @@ func (repository *CustomerRepositoryImpl) FindAll(ctx context.Context, tx *sql.T
 
 	for rows.Next() {
 		customer := domain.Customer{}
+		fmt.Println("RES", customers)
+
 		rows.Scan(&customer.Id, &customer.NIK, &customer.FullName, &customer.LegalName,
 			&customer.BirthPlace, &customer.BirthDate, &customer.Salary, &customer.KTPPhoto,
 			&customer.SelfiePhoto, &customer.CreatedAt, &customer.UpdatedAt)
 
+		fmt.Println("RES", customers)
 		customers = append(customers, customer)
 		if err != nil {
 			logger.Error(ctx, logCtx, err)
@@ -77,7 +81,7 @@ func (repository *CustomerRepositoryImpl) FindById(ctx context.Context, tx *sql.
 
 	customer := domain.Customer{}
 	query := `SELECT id, nik, full_name, legal_name, birth_place, birth_date, salary, ktp_photo,
-	selfie_photo, created_at, updated_at FROM customers WHERE id = ?`
+	selfie_photo, created_at, updated_at FROM customers WHERE id = ?  AND deleted_at IS NULL`
 
 	rows, err := tx.QueryContext(ctx, query, id)
 	if err != nil {

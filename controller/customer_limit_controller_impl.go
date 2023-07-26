@@ -1,10 +1,12 @@
 package controller
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 
 	"github.com/zanuardi/go-xyz-multifinance/helper"
+	"github.com/zanuardi/go-xyz-multifinance/logger"
 	"github.com/zanuardi/go-xyz-multifinance/model/request"
 	"github.com/zanuardi/go-xyz-multifinance/model/response"
 	"github.com/zanuardi/go-xyz-multifinance/service"
@@ -23,12 +25,16 @@ func NewCustomerLimitController(customerLimitService service.CustomerLimitServic
 }
 
 func (customerLimitController *CustomerLimitControllerImpl) Create(w http.ResponseWriter, r *http.Request, param httprouter.Params) {
+	ctx := context.Background()
+	logCtx := "CustomerLimitControllerImpl.Create"
 
 	customerLimitRequest := request.CustomerLimitRequest{}
 	helper.ReadFromRequestBody(r, &customerLimitRequest)
 
 	customerLimitResponse, err := customerLimitController.customerLimitService.Create(r.Context(), customerLimitRequest)
-	helper.PanicIfError(err)
+	if err != nil {
+		logger.Error(ctx, logCtx, err)
+	}
 
 	webResponse := response.WebResponse{
 		Code:   200,
@@ -41,9 +47,13 @@ func (customerLimitController *CustomerLimitControllerImpl) Create(w http.Respon
 }
 
 func (customerLimitController *CustomerLimitControllerImpl) FindAll(w http.ResponseWriter, r *http.Request, param httprouter.Params) {
+	ctx := context.Background()
+	logCtx := "CustomerLimitControllerImpl.FindAll"
 
 	customerLimitResponses, err := customerLimitController.customerLimitService.FindAll(r.Context())
-	helper.PanicIfError(err)
+	if err != nil {
+		logger.Error(ctx, logCtx, err)
+	}
 
 	webResponse := response.WebResponse{
 		Code:   200,
@@ -56,13 +66,19 @@ func (customerLimitController *CustomerLimitControllerImpl) FindAll(w http.Respo
 }
 
 func (customerLimitController *CustomerLimitControllerImpl) FindById(w http.ResponseWriter, r *http.Request, param httprouter.Params) {
+	ctx := context.Background()
+	logCtx := "CustomerLimitControllerImpl.FindById"
 
 	customerLimitId := param.ByName("limit_id")
 	id, err := strconv.Atoi(customerLimitId)
-	helper.PanicIfError(err)
+	if err != nil {
+		logger.Error(ctx, logCtx, err)
+	}
 
 	customerLimitResponse, err := customerLimitController.customerLimitService.FindById(r.Context(), id)
-	helper.PanicIfError(err)
+	if err != nil {
+		logger.Error(ctx, logCtx, err)
+	}
 
 	webResponse := response.WebResponse{
 		Code:   200,
@@ -75,17 +91,24 @@ func (customerLimitController *CustomerLimitControllerImpl) FindById(w http.Resp
 }
 
 func (customerLimitController *CustomerLimitControllerImpl) UpdateById(w http.ResponseWriter, r *http.Request, param httprouter.Params) {
+	ctx := context.Background()
+	logCtx := "CustomerLimitControllerImpl.UpdateById"
+
 	customerLimitRequest := request.CustomerLimitRequest{}
 	helper.ReadFromRequestBody(r, &customerLimitRequest)
 
 	customerLimitId := param.ByName("limit_id")
 	id, err := strconv.Atoi(customerLimitId)
-	helper.PanicIfError(err)
+	if err != nil {
+		logger.Error(ctx, logCtx, err)
+	}
 
 	customerLimitRequest.Id = id
 
 	customerLimitResponse, err := customerLimitController.customerLimitService.UpdateById(r.Context(), customerLimitRequest)
-	helper.PanicIfError(err)
+	if err != nil {
+		logger.Error(ctx, logCtx, err)
+	}
 
 	webResponse := response.WebResponse{
 		Code:   200,
@@ -98,13 +121,19 @@ func (customerLimitController *CustomerLimitControllerImpl) UpdateById(w http.Re
 }
 
 func (customerLimitController *CustomerLimitControllerImpl) DeleteById(w http.ResponseWriter, r *http.Request, param httprouter.Params) {
+	ctx := context.Background()
+	logCtx := "CustomerLimitControllerImpl.DeleteById"
 
 	customerLimitId := param.ByName("limit_id")
 	id, err := strconv.Atoi(customerLimitId)
-	helper.PanicIfError(err)
+	if err != nil {
+		logger.Error(ctx, logCtx, err)
+	}
 
 	err = customerLimitController.customerLimitService.DeleteById(r.Context(), id)
-	helper.PanicIfError(err)
+	if err != nil {
+		logger.Error(ctx, logCtx, err)
+	}
 
 	webResponse := response.WebResponse{
 		Code:   200,

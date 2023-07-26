@@ -12,5 +12,4 @@ type CustomerLimitResponse struct {
 	RemainingLimit float32   `json:"remaining_limit"`
 	CreatedAt      time.Time `json:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at"`
-	DeletedAt      time.Time `json:"deleted_at"`
 }

@@ -4,14 +4,14 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/zanuardi/go-xyz-multifinance/helper"
-
 	_ "github.com/go-sql-driver/mysql"
 )
 
 func NewDB() *sql.DB {
 	db, err := sql.Open("mysql", "root:@tcp(localhost:3306)/xyz_multifinance?parseTime=true")
-	helper.PanicIfError(err)
+	if err != nil {
+		panic(err)
+	}
 
 	db.SetMaxIdleConns(5)
 	db.SetMaxOpenConns(20)

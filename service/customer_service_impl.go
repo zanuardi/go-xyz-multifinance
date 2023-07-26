@@ -55,6 +55,7 @@ func toCustomersResponse(categories []domain.Customer) []response.CustomerRespon
 
 func (customerService *CustomerServiceImpl) Create(ctx context.Context, request request.CustomerRequest) (response.CustomerResponse, error) {
 	logCtx := "CustomerServiceImpl.Create"
+	logger.Info(ctx, logCtx)
 
 	err := customerService.Validate.Struct(request)
 	if err != nil {
