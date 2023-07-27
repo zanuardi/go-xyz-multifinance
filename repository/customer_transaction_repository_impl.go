@@ -23,7 +23,7 @@ func (repository *CustomerTransactionRepositoryImpl) Create(ctx context.Context,
 
 	query := `INSERT INTO customer_transactions
 		(customer_id, contract_number, otr_price, admin_fee, installment_amount,
-		interest_amount, asset_name, status, created_at, updated_at
+		interest_amount, asset_name, status, created_at, updated_at)
 		VALUES(?,?,?,?,?,?,?,?,?,?);`
 
 	now := time.Now()
@@ -103,39 +103,32 @@ func (repository *CustomerTransactionRepositoryImpl) FindById(ctx context.Contex
 
 }
 
-func (repository *CustomerTransactionRepositoryImpl) UpdateById(ctx context.Context, tx *sql.Tx, customerTransaction domain.CustomerTransaction) (domain.CustomerTransaction, error) {
-	logCtx := "customerTransactionRepository.UpdateById"
+func (repository *CustomerTransactionRepositoryImpl) FindByCustomerId(ctx context.Context, tx *sql.Tx, customerId int) (domain.CustomerTransaction, error) {
+	logCtx := "customerTransactionRepository.FindById"
 	logger.Info(ctx, logCtx)
 
-	query := `UPDATE customer_transactions
-			SET customer_id=?, contract_number=?, otr_price=?, admin_fee=?,
-			installment_amount=?, interest_amount=?, asset_name=?, status=?,
-			updated_at=? WHERE id=?;`
+	customerTransaction := domain.CustomerTransaction{}
+	query := `SELECT id, customer_id, contract_number, otr_price, admin_fee,
+		installment_amount,	interest_amount, asset_name, status, created_at, updated_at
+		FROM customer_transactions WHERE customer_id = ?  AND deleted_at IS NULL`
 
-	now := time.Now()
-	_, err := tx.ExecContext(ctx, query, &customerTransaction.CustomerId, &customerTransaction.ContractNumber, &customerTransaction.OTRPrice,
-		&customerTransaction.AdminFee, &customerTransaction.InstallmentAmount, &customerTransaction.InterestAmount, &customerTransaction.AssetName,
-		&customerTransaction.Status, now, &customerTransaction.Id)
+	rows, err := tx.QueryContext(ctx, query, customerId)
 	if err != nil {
 		logger.Error(ctx, logCtx, err)
 	}
+	defer rows.Close()
 
-	return customerTransaction, nil
-
-}
-
-func (repository *CustomerTransactionRepositoryImpl) DeleteById(ctx context.Context, tx *sql.Tx, id int) error {
-	logCtx := "customerTransactionRepository.DeleteById"
-	logger.Info(ctx, logCtx)
-
-	query := `UPDATE customer_transactions
-			SET deleted_at=? WHERE id = ?`
-
-	now := time.Now()
-
-	_, err := tx.ExecContext(ctx, query, now, id)
-	if err != nil {
+	if rows.Next() {
+		rows.Scan(&customerTransaction.Id, &customerTransaction.CustomerId, &customerTransaction.ContractNumber, &customerTransaction.OTRPrice,
+			&customerTransaction.AdminFee, &customerTransaction.InstallmentAmount, &customerTransaction.InterestAmount, &customerTransaction.AssetName,
+			&customerTransaction.Status, &customerTransaction.CreatedAt, &customerTransaction.UpdatedAt)
+		if err != nil {
+			logger.Error(ctx, logCtx, err)
+		}
+		return customerTransaction, nil
+	} else {
 		logger.Error(ctx, logCtx, err)
+		return customerTransaction, errors.New("customerTransaction not found")
 	}
-	return nil
+
 }

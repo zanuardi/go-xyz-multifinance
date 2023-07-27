@@ -11,6 +11,7 @@ type CustomerLimitRepository interface {
 	Create(ctx context.Context, tx *sql.Tx, customerLimit domain.CustomerLimit) (domain.CustomerLimit, error)
 	FindAll(ctx context.Context, tx *sql.Tx) ([]domain.CustomerLimit, error)
 	FindById(ctx context.Context, tx *sql.Tx, id int) (domain.CustomerLimit, error)
+	FindByCustomerId(ctx context.Context, tx *sql.Tx, customerId int) (domain.CustomerLimit, error)
 	UpdateById(ctx context.Context, tx *sql.Tx, customerLimit domain.CustomerLimit) (domain.CustomerLimit, error)
 	DeleteById(ctx context.Context, tx *sql.Tx, id int) error
 }
