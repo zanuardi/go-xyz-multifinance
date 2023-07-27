@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/zanuardi/go-xyz-multifinance/logger"
@@ -62,13 +61,11 @@ func (repository *CustomerLimitRepositoryImpl) FindAll(ctx context.Context, tx *
 
 	for rows.Next() {
 		customerLimit := domain.CustomerLimit{}
-		fmt.Println("RES REPO", customerLimits)
 
 		rows.Scan(&customerLimit.Id, &customerLimit.CustomerId, &customerLimit.Limit1,
 			&customerLimit.Limit2, &customerLimit.Limit3, &customerLimit.Limit4,
 			&customerLimit.RemainingLimit, &customerLimit.CreatedAt, &customerLimit.UpdatedAt)
 
-		fmt.Println("RES REPO", customerLimits)
 		customerLimits = append(customerLimits, customerLimit)
 		if err != nil {
 			logger.Error(ctx, logCtx, err)
@@ -88,6 +85,36 @@ func (repository *CustomerLimitRepositoryImpl) FindById(ctx context.Context, tx 
 			FROM customer_limits WHERE id = ?  AND deleted_at IS NULL`
 
 	rows, err := tx.QueryContext(ctx, query, id)
+	if err != nil {
+		logger.Error(ctx, logCtx, err)
+	}
+	defer rows.Close()
+
+	if rows.Next() {
+		rows.Scan(&customerLimit.Id, &customerLimit.CustomerId, &customerLimit.Limit1, &customerLimit.Limit2,
+			&customerLimit.Limit3, &customerLimit.Limit4, &customerLimit.RemainingLimit,
+			&customerLimit.CreatedAt, &customerLimit.UpdatedAt)
+		if err != nil {
+			logger.Error(ctx, logCtx, err)
+		}
+		return customerLimit, nil
+	} else {
+		logger.Error(ctx, logCtx, err)
+		return customerLimit, errors.New("customerLimit not found")
+	}
+
+}
+
+func (repository *CustomerLimitRepositoryImpl) FindByCustomerId(ctx context.Context, tx *sql.Tx, customerId int) (domain.CustomerLimit, error) {
+	logCtx := "customerLimitRepository.FindById"
+	logger.Info(ctx, logCtx)
+
+	customerLimit := domain.CustomerLimit{}
+	query := `SELECT id, customer_id, limit_1, limit_2, limit_3, limit_4,
+			remaining_limit, created_at, updated_at
+			FROM customer_limits WHERE customer_id = ?  AND deleted_at IS NULL`
+
+	rows, err := tx.QueryContext(ctx, query, customerId)
 	if err != nil {
 		logger.Error(ctx, logCtx, err)
 	}

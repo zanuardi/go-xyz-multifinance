@@ -23,6 +23,7 @@ func NewRouter(
 
 	// Customer Transaction...
 	router.GET("/api/customers/transactions/id/:transaction_id", customerTransactionController.FindById)
+	router.GET("/api/customers/transactions/customer_id/:customer_id", customerTransactionController.FindByCustomerId)
 	router.POST("/api/customers/transactions", customerTransactionController.Create)
 
 	// Customer Limit...
