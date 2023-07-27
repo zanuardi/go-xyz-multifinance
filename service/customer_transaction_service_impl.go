@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"database/sql"
-	"fmt"
 
 	"github.com/zanuardi/go-xyz-multifinance/exception"
 	"github.com/zanuardi/go-xyz-multifinance/helper"
@@ -18,13 +17,17 @@ import (
 
 type CustomerTransactionServiceImpl struct {
 	CustomerTransactionRepository repository.CustomerTransactionRepository
+	CustomerLimitRepository       repository.CustomerLimitRepository
+	CustomerInstallmentRepository repository.CustomerInstallmentRepository
 	DB                            *sql.DB
 	Validate                      *validator.Validate
 }
 
-func NewCustomerTransactionService(customerRepository repository.CustomerTransactionRepository, DB *sql.DB, validate *validator.Validate) CustomerTransactionService {
+func NewCustomerTransactionService(customerRepository repository.CustomerTransactionRepository, customerLimitRepository repository.CustomerLimitRepository, customerInstallmentRepository repository.CustomerInstallmentRepository, DB *sql.DB, validate *validator.Validate) CustomerTransactionService {
 	return &CustomerTransactionServiceImpl{
 		CustomerTransactionRepository: customerRepository,
+		CustomerLimitRepository:       customerLimitRepository,
+		CustomerInstallmentRepository: customerInstallmentRepository,
 		DB:                            DB,
 		Validate:                      validate,
 	}
@@ -56,6 +59,7 @@ func toCustomerTransactionsResponse(categories []domain.CustomerTransaction) []r
 
 func (customerService *CustomerTransactionServiceImpl) Create(ctx context.Context, request request.CustomerTransactionRequest) (response.CustomerTransactionResponse, error) {
 	logCtx := "CustomerTransactionServiceImpl.Create"
+	logger.Info(ctx, logCtx)
 
 	err := customerService.Validate.Struct(request)
 	if err != nil {
@@ -72,20 +76,70 @@ func (customerService *CustomerTransactionServiceImpl) Create(ctx context.Contex
 		CustomerId:        request.CustomerId,
 		ContractNumber:    request.ContractNumber,
 		OTRPrice:          request.OTRPrice,
-		AdminFee:          request.OTRPrice,
+		AdminFee:          request.AdminFee,
 		InstallmentAmount: request.InstallmentAmount,
 		InterestAmount:    request.InterestAmount,
 		AssetName:         request.AssetName,
-		Status:            request.Status,
+		Status:            "PENDING",
 	}
 
-	customerRequest, err := customerService.CustomerTransactionRepository.Create(ctx, tx, customer)
+	totalAmount := request.OTRPrice + request.AdminFee
+
+	resultChan := make(chan bool)
+	go customerService.checkCustomerLimit(ctx, request.CustomerId, totalAmount, request.Tenor, resultChan)
+
+	valid := <-resultChan
+
+	if valid {
+		customerRequest, err := customerService.CustomerTransactionRepository.Create(ctx, tx, customer)
+		if err != nil {
+			logger.Error(ctx, logCtx, err)
+		}
+		return toCustomerTransactionResponse(customerRequest), err
+	} else {
+		logger.Error(ctx, logCtx, err)
+		return response.CustomerTransactionResponse{}, err
+	}
+
+}
+
+func (customerService *CustomerTransactionServiceImpl) checkCustomerLimit(ctx context.Context, customerID int, amount float32, tenor int, resultChan chan bool) {
+	logCtx := "CustomerTransactionServiceImpl.checkCustomerLimit"
+	logger.Info(ctx, logCtx)
+
+	tx, err := customerService.DB.Begin()
+	if err != nil {
+		logger.Error(ctx, logCtx, err)
+	}
+	defer helper.CommitOrRollback(tx)
+
+	checkLimit, err := customerService.CustomerLimitRepository.FindByCustomerId(ctx, tx, customerID)
 	if err != nil {
 		logger.Error(ctx, logCtx, err)
 	}
 
-	return toCustomerTransactionResponse(customerRequest), err
+	if err != nil {
+		logger.Error(ctx, logCtx+"Error retrieving limit for customer", err)
+		resultChan <- false
+		return
+	}
 
+	var limit float32
+	if tenor == 1 {
+		limit = checkLimit.Limit1
+	} else if tenor == 2 {
+		limit = checkLimit.Limit2
+	} else if tenor == 3 {
+		limit = checkLimit.Limit3
+	} else {
+		limit = checkLimit.Limit4
+	}
+
+	if limit >= amount {
+		resultChan <- true
+	} else {
+		resultChan <- false
+	}
 }
 
 func (customerService *CustomerTransactionServiceImpl) FindAll(ctx context.Context) ([]response.CustomerTransactionResponse, error) {
@@ -98,7 +152,6 @@ func (customerService *CustomerTransactionServiceImpl) FindAll(ctx context.Conte
 	defer helper.CommitOrRollback(tx)
 
 	customers, err := customerService.CustomerTransactionRepository.FindAll(ctx, tx)
-	fmt.Println(customers)
 	if err != nil {
 		logger.Error(ctx, logCtx, err)
 	}
@@ -122,13 +175,8 @@ func (customerService *CustomerTransactionServiceImpl) FindById(ctx context.Cont
 	return toCustomerTransactionResponse(customer), err
 }
 
-func (customerService *CustomerTransactionServiceImpl) UpdateById(ctx context.Context, request request.CustomerTransactionRequest) (response.CustomerTransactionResponse, error) {
-	logCtx := "CustomerTransactionServiceImpl.UpdateById"
-
-	err := customerService.Validate.Struct(request)
-	if err != nil {
-		logger.Error(ctx, logCtx, err)
-	}
+func (customerService *CustomerTransactionServiceImpl) FindByCustomerId(ctx context.Context, customerId int) (response.CustomerTransactionResponse, error) {
+	logCtx := "CustomerTransactionServiceImpl.FindById"
 
 	tx, err := customerService.DB.Begin()
 	if err != nil {
@@ -136,46 +184,9 @@ func (customerService *CustomerTransactionServiceImpl) UpdateById(ctx context.Co
 	}
 	defer helper.CommitOrRollback(tx)
 
-	customer, err := customerService.CustomerTransactionRepository.FindById(ctx, tx, request.Id)
+	customer, err := customerService.CustomerTransactionRepository.FindByCustomerId(ctx, tx, customerId)
 	if err != nil {
 		panic(exception.NewNotFoundError(err.Error()))
 	}
-
-	req := domain.CustomerTransaction{
-		Id:                customer.Id,
-		CustomerId:        request.CustomerId,
-		ContractNumber:    request.ContractNumber,
-		OTRPrice:          request.OTRPrice,
-		AdminFee:          request.OTRPrice,
-		InstallmentAmount: request.InstallmentAmount,
-		InterestAmount:    request.InterestAmount,
-		AssetName:         request.AssetName,
-		Status:            request.Status,
-	}
-	res, err := customerService.CustomerTransactionRepository.UpdateById(ctx, tx, req)
-
-	if err != nil {
-		logger.Error(ctx, logCtx, err)
-	}
-
-	return toCustomerTransactionResponse(res), nil
-}
-
-func (customerService *CustomerTransactionServiceImpl) DeleteById(ctx context.Context, id int) error {
-	logCtx := "CustomerTransactionServiceImpl.DelleteById"
-
-	tx, err := customerService.DB.Begin()
-	if err != nil {
-		logger.Error(ctx, logCtx, err)
-	}
-	defer helper.CommitOrRollback(tx)
-
-	customer, err := customerService.CustomerTransactionRepository.FindById(ctx, tx, id)
-	if err != nil {
-		panic(exception.NewNotFoundError(err.Error()))
-	}
-
-	customerService.CustomerTransactionRepository.DeleteById(ctx, tx, customer.Id)
-
-	return nil
+	return toCustomerTransactionResponse(customer), err
 }

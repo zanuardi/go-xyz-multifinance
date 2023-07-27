@@ -26,13 +26,15 @@ func main() {
 	customerService := service.NewCustomerService(customerRepository, db, validate)
 	customerController := controller.NewCustomerController(customerService)
 
-	customerTransactionRepository := repository.NewCustomerTransactionRepository()
-	customerTransactionService := service.NewCustomerTransactionService(customerTransactionRepository, db, validate)
-	customerTransactionController := controller.NewCustomerTransactionController(customerTransactionService)
-
 	customerLimitRepository := repository.NewCustomerLimitRepository()
 	customerLimitService := service.NewCustomerLimitService(customerLimitRepository, db, validate)
 	customerLimitController := controller.NewCustomerLimitController(customerLimitService)
+
+	customerInstallmentRepository := repository.NewCustomerInstallmentRepository()
+
+	customerTransactionRepository := repository.NewCustomerTransactionRepository()
+	customerTransactionService := service.NewCustomerTransactionService(customerTransactionRepository, customerLimitRepository, customerInstallmentRepository, db, validate)
+	customerTransactionController := controller.NewCustomerTransactionController(customerTransactionService)
 
 	router := app.NewRouter(
 		customerController,
