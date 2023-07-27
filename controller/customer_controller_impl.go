@@ -2,7 +2,6 @@ package controller
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -49,8 +48,6 @@ func (customerController *CustomerControllerImpl) Create(w http.ResponseWriter, 
 }
 
 func (customerController *CustomerControllerImpl) FindAll(w http.ResponseWriter, r *http.Request, param httprouter.Params) {
-
-	fmt.Println("==============PASSED customerController==============")
 
 	ctx := context.Background()
 	logCtx := "CustomerControllerImpl.FindAll"
